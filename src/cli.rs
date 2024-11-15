@@ -61,7 +61,7 @@ pub static mut ALL_ELM: Lazy<All> = Lazy::new(|| All::default());
 
 
 #[derive(Debug, StructOpt, Default)]
-#[structopt(name = "LisaDbg", version = "2.4.0")]
+#[structopt(name = "LisaDbg", version = "3.0")]
 pub struct Dbgoption {
     pub file: Option<String>,
     #[structopt(short = "b", long = "breakpoint", help = "to place a breakpoint at an address (RVA)")]
