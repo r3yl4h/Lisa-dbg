@@ -52,7 +52,7 @@ You can install LisaDbg in one of two ways:
 If you prefer not to compile the project, you can download the precompiled release from the GitHub releases page:
 
 1. Go to the [GitHub Releases](https://github.com/r3yl4h/Lisa-dbg/releases) page.
-2. Download the appropriate version for your platform (e.g., `.tar.gz` for Linux, `.zip` for Windows).
+2. Download.
 3. Extract the archive and run the `LisaDbg` executable.
 
 ---
