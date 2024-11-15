@@ -107,7 +107,7 @@ During a debugging session, you can use the following commands to interact with 
 - `backtrace`, `frame` : Print the call stack frames for debugging purposes.
 - `mem-info` : Display all memory information at this address (base address, state, etc.).
 - `deref` : Dereference the value at a specific memory address or register in the target process.
-- `disasm` : Disassemble opcodes from a specified address (VA).
+- `disasm` : Disassemble opcodes from a specified address (VA) or symbol name.
 - `continue`, `c`, `run` : Continue the execution of the process.
 - `set` : To set something, it can be a register, a value at an address, or a memory protection. For more information, type "help set".
 
