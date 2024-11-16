@@ -2,129 +2,185 @@
 
 # **LisaDbg**
 
-LisaDbg is a debugger designed for analyzing and debugging applications. It offers advanced features like breakpoints, watchpoints, attaching to running processes, memory management, and more to assist developers in understanding the internal behavior of a program.
+LisaDbg is a debugger designed for developers to analyze and debug programs effectively. It provides advanced features like symbolic debugging, memory observation, breakpoints, and real-time process manipulation. LisaDbg is flexible, efficient, and supports debugging of running processes or standalone files.
+
+---
 
 ## **Version**
-LisaDbg 3.0.0
+**LisaDbg 2.4.0**
 
 ---
 
 ## **Table of Contents**
 
-- [Overview](#overview)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [CLI Commands](#cli-commands)
-  - [Debugging Commands](#debugging-commands)
-- [Detailed Commands](#detailed-commands)
-- [Contributing](#contributing)
+1. [Overview](#overview)
+2. [Installation](#installation)
+   - [Option 1: Clone the Repository](#option-1-clone-the-repository)
+   - [Option 2: Download from Releases](#option-2-download-from-releases)
+3. [Usage](#usage)
+   - [CLI Options](#cli-options)
+   - [Commands Before Debugging](#commands-before-debugging)
+   - [Commands During Debugging](#commands-during-debugging)
+4. [Contributing](#contributing)
 
 ---
 
 ## **Overview**
 
-LisaDbg is a real-time debugging tool designed to analyze and debug applications. It provides features such as breakpoint management, watchpoints, process attachment, and more. The debugger supports symbolic commands to work with specific functions and addresses.
+LisaDbg is a robust debugger that helps you inspect, debug, and analyze application behavior. Its features include:
+- **Breakpoint management:** Add or remove breakpoints at specific addresses or functions.
+- **Memory observation:** Watch memory locations for changes.
+- **Symbolic debugging:** Work with functions and symbols for easier debugging.
+- **Process attachment:** Attach to and debug running processes.
+
+Whether you’re debugging a file or attaching to a live process, LisaDbg gives you the tools you need to understand and fix issues.
 
 ---
 
 ## **Installation**
 
-### Prerequisites
-- Rust 1.56 or newer
-- A compatible compiler for the target platform
+LisaDbg can be installed in two ways:
 
-### Clone and compile the project
+### **Option 1: Clone the Repository**
 
-```bash
-git clone https://github.com/r3yl4h/Lisa-dbg.git
-cd Lisa-dbg
-cargo build --release
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/r3yl4h/Lisa-dbg.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd Lisa-dbg
+   ```
+3. Build the project using Cargo:
+   ```bash
+   cargo build --release
+   ```
+4. The executable will be available in the `target/release/` directory.
 
-This will generate the `LisaDbg` executable in the `target/release/` directory.
+---
+
+### **Option 2: Download from Releases**
+
+1. Go to the [Releases](https://github.com/r3yl4h/Lisa-dbg/releases) page.
+2. Download the appropriate binary for your platform.
+3. Extract the archive, and you’re ready to use LisaDbg.
 
 ---
 
 ## **Usage**
 
-### CLI Commands
+LisaDbg operates through three main interfaces:
+1. **Command-Line Interface (CLI)** – Used to start the debugger with specific options or arguments.
+2. **Commands Before Debugging** – Configure the debugger or program context.
+3. **Commands During Debugging** – Control and analyze the target program after execution begins.
 
-When running `LisaDbg` from the command line, you can use the following options and arguments:
+---
 
-#### **Flags:**
-- `-h, --help` : Prints help information.
-- `-V, --version` : Prints the current version of LisaDbg.
+### **CLI Options**
 
-#### **Options:**
+Use the following options to start LisaDbg:
+
+#### **Usage**
+```bash
+LisaDbg [OPTIONS] [--] [file]
+```
+
+#### **Flags**
+- `-h, --help` : Show help information.
+- `-V, --version` : Display the version of LisaDbg.
+
+#### **Options**
 - `-a, --arg <arg>` : Set arguments for the script to debug.
-- `--attach <attach>` : Attach the debugger to an existing process by PID or name.
-- `--b-ret <b-ret>` : Set a breakpoint at the return address of the function.
-- `--b-ret-va <b-ret-va>` : Set a breakpoint at the return address of the function which contains the virtual address (VA).
-- `--b-va <b-va>` : Set a breakpoint at a specific address (VA) that you know in advance.
-- `-b, --breakpoint <breakpoint-addr>` : Set a breakpoint at a specific address (RVA).
+- `--attach <attach>` : Attach to an existing process by PID or name.
+- `--b-ret <b-ret>` : Add a breakpoint at the return address of the function containing the specified RVA.
+- `--b-ret-va <b-ret-va>` : Add a breakpoint at the return address of the function containing the specified VA.
+- `--b-va <b-va>` : Add a breakpoint at a specific virtual address (VA).
+- `-b, --breakpoint <breakpoint-addr>` : Add a breakpoint at a specific relative virtual address (RVA).
 - `--exec <exec-cmd>` : Execute a command before running the debugger.
-- `-w, --watchpoint <watchpts>` : Set a watchpoint at a specific memory region.
+- `-w, --watchpoint <watchpts>` : Set a watchpoint in the format `[--memory=<zone>] [--access=<rights>] <offset>`.
 
-#### **Arguments:**
-- `<file>` : The file to debug.
-
----
-
-### Debugging Commands
-
-During a debugging session, you can use the following commands to interact with the program you are debugging:
-
-#### **General Commands:**
-- `breakpoint`, `b` : Set a breakpoint at the specified address (RVA) or symbol.
-- `file` : Change the current file context.
-- `run` : Start or resume execution of the debugged program.
-- `reset` : Reset the debugger settings or context.
-- `remove` : Remove a specified element. For more information, type "help remove".
-- `quit`, `q`, `exit` : Exit the debugger.
-- `s`, `sym`, `symbol` : Load symbols, which allows commands like `b-ret` to be used with function names directly.
-- `b-ret` : Set a breakpoint at the return address of the specified function.
-
-#### **Advanced Commands:**
-- `hook`, `ho` : Set up a function hook to redirect execution flow.
-- `create-func`, `crt-func` : Create a custom function with a return value allocated at runtime.
-- `printf` : `printf` displays a formatted string by replacing specifiers (%d, %s, etc.) with the values of the provided variables or arguments.
-- `info` : View certain information like the symbols and breakpoints that have been placed.
-
-#### **Commands During Debugging:**
-- `address-func`, `addr-func` : Display current function information.
-- `backtrace`, `frame` : Print the call stack frames for debugging purposes.
-- `mem-info` : Display all memory information at this address (base address, state, etc.).
-- `deref` : Dereference the value at a specific memory address or register in the target process.
-- `disasm` : Disassemble opcodes from a specified address (VA).
-- `continue`, `c`, `run` : Continue the execution of the process.
-- `set` : To set something, it can be a register, a value at an address, or a memory protection. For more information, type "help set".
+#### **Arguments**
+- `<file>` : Specify the file to debug.
 
 ---
 
-## **Detailed Commands**
+### **Commands Before Debugging**
 
-### **Element-Specific Commands**
+When LisaDbg is launched, you can configure and prepare the debugger using these commands:
 
-Some commands are specific to an element of debugging, such as registers, threads, or symbols. You can get detailed information by typing:
+| Command                    | Description |
+|----------------------------|-------------|
+| `breakpoint, b`            | Add a breakpoint at the specified RVA or symbol. |
+| `file`                     | Change the current file context. |
+| `run`                      | Start or resume the program execution. |
+| `reset`                    | Reset debugger settings or context. |
+| `remove`                   | Remove a specified element (e.g., breakpoint). |
+| `quit, q, exit`            | Exit the debugger. |
+| `s, sym, symbol`           | Load symbols to enable symbolic debugging. |
+| `b-ret`                    | Add a breakpoint at the return address of a function or instruction. |
+| `skip`                     | Skip calls to the specified function. |
+| `proc-addr`                | Retrieve the address of a function in a DLL. |
+| `hook, ho`                 | Set up a function hook to redirect execution flow. |
+| `create-func, crt-func`    | Create a custom function with a return value allocated at runtime. |
+| `info`                     | Display information (e.g., placed breakpoints). |
+| `watchpoint, watch, w`     | Set a memory observation point. |
+| `sym-info`                 | Show detailed symbol information. |
+| `arg, args, argv`          | Set program arguments for the debugged program. |
+| `attach`                   | Attach the debugger to a running process. |
+| `break-va, b-va`           | Add a breakpoint at a specified VA. |
+| `break-ret-va, b-ret-va`   | Add a breakpoint at the return address of a VA-specified function. |
+| `printf`                   | Display formatted strings. |
+| `help, h`                  | Display help for commands. |
 
+For detailed usage, type:
+```bash
+help <command>
+```
+
+---
+
+### **Commands During Debugging**
+
+Once execution begins and a breakpoint is hit, you can use the following commands:
+
+| Command                    | Description |
+|----------------------------|-------------|
+| `address-func, addr-func`  | Show current function information. |
+| `backtrace, frame`         | Print the call stack. |
+| `base-addr, ba`            | Display the process’s base address. |
+| `b, breakpoint`            | Add a breakpoint at the specified RVA or symbol. |
+| `b-ret`                    | Add a breakpoint at a function's return address. |
+| `b-va, break-va`           | Add a breakpoint at a specific VA. |
+| `continue, c, run`         | Resume program execution. |
+| `cva`                      | Convert an RVA to a VA. |
+| `deref`                    | Dereference a memory address or register. |
+| `dbg-thread, dbg-th`       | Debug a specific thread by its ID. |
+| `disasm`                   | Disassemble opcodes at a specific VA. |
+| `find`                     | Search for a value between two addresses. |
+| `mem-info`                 | Show memory information (e.g., base address, state). |
+| `proc-addr`                | Retrieve a function's address in a DLL. |
+| `quit, q, break`           | Terminate the debugging session. |
+| `reset`                    | Reset the debugger state. |
+| `ret`                      | Set the instruction pointer (RIP) to the current function's return address. |
+| `set`                      | Set values (e.g., register, memory protections). |
+| `skip`                     | Skip calls to a specified function. |
+| `s`                        | Load symbol files if available. |
+| `sym-address`              | Display the address of a symbol by name. |
+| `symbol-local, sym-local`  | Display all local symbols for the current function. |
+| `thread-info, th-info`     | Show information about the current thread. |
+| `value, v, register, reg, r` | Display a register's value. |
+| `info`                     | Show information like active breakpoints, active thread, etc. |
+| `printf`                   | Print formatted output. |
+
+To learn all commands for an element:
 ```bash
 help all <element-name>
 ```
-
-The available elements include:
-- `b, break, breakpoint`
-- `run`
-- `reset, remove`
-- `ret`
-- `thread, th`
-- `register, reg`
-
-For detailed usage, just type `help <command>` without its arguments.
 
 ---
 
 ## **Contributing**
 
-If you wish to contribute to LisaDbg, feel free to open issues or submit pull requests. Ensure that you follow coding best practices and include tests for any new features.
+Contributions are welcome! Submit issues or pull requests to help improve LisaDbg. Be sure to include tests and documentation for any new features.
 
 ---
