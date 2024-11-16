@@ -7,7 +7,7 @@ LisaDbg is a debugger designed for developers to analyze and debug programs effe
 ---
 
 ## **Version**
-**LisaDbg 2.4.0**
+**LisaDbg 3.0.0**
 
 ---
 
