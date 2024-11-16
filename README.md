@@ -5,7 +5,7 @@
 LisaDbg is a debugger designed for analyzing and debugging applications. It offers advanced features like breakpoints, watchpoints, attaching to running processes, memory management, and more to assist developers in understanding the internal behavior of a program.
 
 ## **Version**
-LisaDbg 2.4.0
+LisaDbg 3.0.0
 
 ---
 
@@ -29,31 +29,19 @@ LisaDbg is a real-time debugging tool designed to analyze and debug applications
 
 ## **Installation**
 
-You can install LisaDbg in one of two ways:
+### Prerequisites
+- Rust 1.56 or newer
+- A compatible compiler for the target platform
 
-### **Option 1: Clone and Compile the Project**
+### Clone and compile the project
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/r3yl4h/Lisa-dbg.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd Lisa-dbg
-   ```
-3. Build the project using Cargo:
-   ```bash
-   cargo build --release
-   ```
-   This will generate the `LisaDbg` executable in the `target/release/` directory.
+```bash
+git clone https://github.com/r3yl4h/Lisa-dbg.git
+cd Lisa-dbg
+cargo build --release
+```
 
-### **Option 2: Download from GitHub Releases**
-
-If you prefer not to compile the project, you can download the precompiled release from the GitHub releases page:
-
-1. Go to the [GitHub Releases](https://github.com/r3yl4h/Lisa-dbg/releases) page.
-2. Download.
-3. Extract the archive and run the `LisaDbg` executable.
+This will generate the `LisaDbg` executable in the `target/release/` directory.
 
 ---
 
@@ -107,7 +95,7 @@ During a debugging session, you can use the following commands to interact with 
 - `backtrace`, `frame` : Print the call stack frames for debugging purposes.
 - `mem-info` : Display all memory information at this address (base address, state, etc.).
 - `deref` : Dereference the value at a specific memory address or register in the target process.
-- `disasm` : Disassemble opcodes from a specified address (VA) or symbol name.
+- `disasm` : Disassemble opcodes from a specified address (VA).
 - `continue`, `c`, `run` : Continue the execution of the process.
 - `set` : To set something, it can be a register, a value at an address, or a memory protection. For more information, type "help set".
 
