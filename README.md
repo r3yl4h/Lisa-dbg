@@ -121,7 +121,7 @@ When LisaDbg is launched, you can configure and prepare the debugger using these
 | `skip`                     | Skip calls to the specified function. |
 | `proc-addr`                | Retrieve the address of a function in a DLL. |
 | `hook, ho`                 | Set up a function hook to redirect execution flow. |
-| `create-func, crt-func`    | Create a custom function with a return value allocated at runtime. |
+| `create-func, crt-func`    | Create a custom function with asm code. |
 | `info`                     | Display information (e.g., placed breakpoints). |
 | `watchpoint, watch, w`     | Set a memory observation point. |
 | `sym-info`                 | Show detailed symbol information. |
