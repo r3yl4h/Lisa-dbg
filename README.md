@@ -67,7 +67,7 @@ Ensure you have [Rust](https://rustup.rs/) installed on your system. LisaDbg is 
 
 ### Installation via Releases
 
-1. Visit the [Releases Page](https:/r3yl4h/github.com//LisaDbg/releases).  
+1. Visit the [Releases Page](https:/r3yl4h/github.com/LisaDbg/releases).  
 2. Download the latest release.  
 3. Extract the downloaded archive and execute `lisa-dbg`.
 
