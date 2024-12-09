@@ -4,9 +4,8 @@ use crate::dbg::memory::breakpoint::set_breakpoint;
 use crate::dbg::{memory, BASE_ADDR};
 use crate::usage;
 use winapi::shared::ntdef::HANDLE;
-use winapi::um::winnt::{CONTEXT, WOW64_CONTEXT};
+use winapi::um::winnt::CONTEXT;
 use crate::cli::ALL_ELM;
-use crate::pefile::{NtHeaders, NT_HEADER};
 use crate::ut::{fmt::*};
 use crate::ut::*;
 
@@ -40,7 +39,7 @@ impl Brkpts {
         res
     }
     
-    pub fn from_str_ctx64(s: &str, ctx: CONTEXT) -> Result<Self, StrErr> {
+    pub fn from_str_ctx(s: &str, ctx: *const CONTEXT) -> Result<Self, StrErr> {
         let linev = s.split_whitespace().collect::<Vec<&str>>();
         if linev.len() < 2 {
             return Err(StrErr::ShortArg);
@@ -48,27 +47,7 @@ impl Brkpts {
         let mut result = Brkpts::default();
         match get_addr_va(linev[1], ctx) {
             Ok(addr) => result.addr = addr,
-            Err(e) => return Err(StrErr::InvalidAddr(e))
-        }
-        if linev.len() == 3 {
-            match linev[2].to_lowercase().as_str() {
-                "normal" | "normally" => result.b_mod = BMOD::Normally,
-                "pro" => result.b_mod = BMOD::Pro,
-                _ => return Err(StrErr::InvalidMod(linev[2].to_string()))
-            }
-        }
-        Ok(result)
-    }
-
-    pub fn from_str_ctx32(s: &str, ctx: WOW64_CONTEXT) -> Result<Self, StrErr> {
-        let linev = s.split_whitespace().collect::<Vec<&str>>();
-        if linev.len() < 2 {
-            return Err(StrErr::ShortArg);
-        }
-        let mut result = Brkpts::default();
-        match get_addr_va32(linev[1], ctx) {
-            Ok(addr) => result.addr = addr as u64,
-            Err(e) => return Err(StrErr::InvalidAddr(e))
+            Err(e) => return Err(StrErr::InvalidAddr(e.to_string()))
         }
         if linev.len() == 3 {
             match linev[2].to_lowercase().as_str() {
@@ -110,7 +89,7 @@ impl FromStr for Brkpts {
         let mut result = Brkpts::default();
         match get_addr_br(linev[1]) {
             Ok(addr) => result.addr = addr,
-            Err(e) => return Err(StrErr::InvalidAddr(e))
+            Err(e) => return Err(StrErr::InvalidAddr(e.to_string()))
         }
         if linev.len() == 3 {
             match linev[2].to_lowercase().as_str() {
@@ -173,15 +152,7 @@ pub fn handle_b_va_proc(linev: &[&str], h_proc: HANDLE, ctx: *const CONTEXT) {
     }
     
     unsafe {
-        let b = match NT_HEADER.unwrap() {
-            NtHeaders::Headers32(_) => {
-                Brkpts::from_str_ctx32(&linev.join(" "), *(ctx as *const WOW64_CONTEXT))
-            }
-            NtHeaders::Headers64(_) => {
-                Brkpts::from_str_ctx64(&linev.join(" "), *ctx)
-            }
-        };
-        match b {
+        match Brkpts::from_str_ctx(&linev.join(" "), ctx) {
             Ok(mut b) => {
                 if (*ptr::addr_of!(ALL_ELM)).break_contain(b.addr) {
                     print_lg(LevelPrint::ErrorO, format!("you have already placed a breakpoint here : {:#x}", b.addr));

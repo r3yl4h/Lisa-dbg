@@ -2,7 +2,7 @@ use std::ptr;
 use winapi::um::winnt::HANDLE;
 use crate::cli::All;
 use crate::pefile::function;
-use crate::symbol::{Symbols, SYMBOLS_V};
+use crate::symbol::{SymbolType, Symbols, SYMBOLS_V};
 use crate::{pefile, symbol, usage, ALL_ELM};
 use crate::command::breakpoint::Brkpts;
 use crate::dbg::{memory, BASE_ADDR};
@@ -82,6 +82,8 @@ pub fn handle_reset(linev: &[&str]) {
                 (*ptr::addr_of_mut!(function::FUNC_INFO)).clear();
                 (*p_allm).hook.clear();
                 *(*p_allm) = All::default();
+                SYMBOLS_V.symbol_type = SymbolType::Un;
+                (*&raw mut SYMBOLS_V).symbol_file.clear();
                 print_reset_message("elements");
             }
             _ => eprintln!("{}", usage::USAGE_RESET),

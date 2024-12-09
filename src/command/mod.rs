@@ -12,7 +12,6 @@ pub mod stret;
 pub mod sym;
 pub mod info;
 pub mod watchpoint;
-mod start;
 
 pub mod arg {
     use crate::{usage, ALL_ELM};
@@ -57,7 +56,7 @@ pub mod with_va {
                 if addr_va < crate::dbg::BASE_ADDR {
                     print_lg(LevelPrint::ErrorO, format!(
                         "the specified address cannot be larger than the base address - {:#x} - {:#x}",
-                        addr_va, (*&raw const crate::dbg::BASE_ADDR)
+                        addr_va, *&raw const crate::dbg::BASE_ADDR
                     ));
                     return;
                 }

@@ -70,8 +70,9 @@ unsafe fn match_fi(type_p: TypeP, h_proc: HANDLE, addr_n: usize, cout_ptr: usize
         TypeP::F32(cout) => read_memory::<f32>(h_proc, addr_n, cout_ptr, cout, field_name, &mut 0),
         TypeP::F64(cout) => read_memory::<f64>(h_proc, addr_n, cout_ptr, cout, field_name, &mut 0),
         TypeP::Ptr(ptrs, cout) => {
-            for _ in 0..cout {
-                match_fi(*ptrs.type_deref.clone(), h_proc, addr_n, ptrs.cout_ptr + 1, field_name)
+            let size_ptr = NT_HEADER.unwrap().get_size_of_arch();
+            for i in 0..cout {
+                match_fi(*ptrs.type_deref.clone(), h_proc, addr_n + (i * size_ptr), ptrs.cout_ptr + 1, field_name)
             }
         }
         TypeP::Bool(cout) => read_memory::<bool>(h_proc, addr_n, cout_ptr, cout, field_name, &mut 0),
@@ -189,6 +190,8 @@ pub fn deref_memory(h_proc: HANDLE, dtype: &str, address: usize) -> Result<(), S
     }
     Ok(())
 }
+
+
 
 pub fn espc(input: &[u8]) -> String {
     let mut result = String::new();

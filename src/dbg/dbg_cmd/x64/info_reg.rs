@@ -214,6 +214,6 @@ pub unsafe fn handle_reg(linev: &[&str], ctx: CONTEXT) {
                 Value::Un => print_lg(LevelPrint::ErrorO, format!("unknow register : '{register}'")),
             }
         }
-        None => println!("{}", usage::USAGE_INFO),
+        None => println!("{}", usage::USAGE_REG),
     }
 }

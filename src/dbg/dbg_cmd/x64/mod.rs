@@ -4,7 +4,7 @@ use crate::dbg::dbg_cmd::{disasm, usages};
 use crate::dbg::memory::deref_mem;
 use crate::dbg::memory::set::thread::get_thread_now;
 use crate::dbg::{memory, DbgState, BASE_ADDR};
-use crate::{command, dbg, symbol};
+use crate::{command, ctx_ptr, dbg, symbol};
 use std::io::{self, Write};
 use std::{ptr, str};
 use winapi::shared::ntdef::HANDLE;
@@ -43,21 +43,21 @@ pub fn cmd_wait(ctx: &mut CONTEXT, h_proc: HANDLE, h_thread: &mut HANDLE, contin
             Some(&"ret") => dbg::dbg_cmd::handle_ret::<u64>(&mut ctx.Rip, &mut ctx.Rsp),
             Some(&"break-ret") | Some(&"b-ret") => command::stret::handle_stret(&linev, h_proc),
             Some(&"skip") => dbg::dbg_cmd::handle_skip(&linev, h_proc),
-            Some(&"info") => command::info::handle_info(&linev, *ctx, h_proc),
+            Some(&"info") => command::info::handle_info(&linev, ctx_ptr!(*ctx), h_proc),
             Some(&"disasm") => disasm::handle_disasm(&linev, h_proc, ptr::addr_of!(*ctx)),
-            Some(&"s") => symbol::load_symbol(),
-            Some(&"symbol-address") | Some(&"sym-address") | Some(&"sym-addr") => sym::handle_sym_addr(&linev, *ctx),
-            Some(&"backtrace") | Some(&"frame") => dbg::dbg_cmd::handle_backtrace(&linev),
-            Some(&"sym-info") => sym::handle_sym_info(&linev, *ctx),
+            Some(&"s") => symbol::load_symbol(&linev, &input),
+            Some(&"symbol-address") | Some(&"sym-address") | Some(&"sym-addr") => sym::handle_sym_addr(&linev, ctx_ptr!(*ctx)),
+            Some(&"backtrace") | Some(&"frame") => dbg::dbg_cmd::handle_backtrace(&linev, ctx_ptr!(*ctx)),
+            Some(&"sym-info") => sym::handle_sym_info(&linev, ctx_ptr!(*ctx)),
             Some(&"add") => command::little_secret::add_op(&linev),
             Some(&"sub") => command::little_secret::sub_op(&linev),
             Some(&"watchpoint") | Some(&"watch") | Some(&"w") => command::watchpoint::watchpoint_proc(&linev, ctx),
             Some(&"crva") => command::with_va::handle_calcule_rva(&linev),
-            Some(&"address-function") | Some(&"address-func") | Some(&"addr-func") => dbg::dbg_cmd::print_curr_func(addr_func, *ctx),
-            Some(&"symbol-local") | Some(&"sym-local") => sym::print_local_sym(*ctx),
-            Some(&"memory-info") | Some(&"mem-info") => memory::mem_info::handle_mem_info64(&linev, h_proc, *ctx),
+            Some(&"address-function") | Some(&"address-func") | Some(&"addr-func") => dbg::dbg_cmd::print_curr_func(addr_func, ctx_ptr!(*ctx)),
+            Some(&"symbol-local") | Some(&"sym-local") => sym::print_local_sym(ctx_ptr!(*ctx)),
+            Some(&"memory-info") | Some(&"mem-info") => memory::mem_info::handle_mem_info(&linev, h_proc, ctx_ptr!(*ctx)),
             Some(&"b-va") | Some(&"break-va") => command::breakpoint::handle_b_va_proc(&linev, h_proc, ptr::addr_of!(*ctx)),
-            Some(&"def") => command::def::handle_def(&linev),
+            Some(&"def") => command::def::handle_def(&linev, &input),
             Some(&"find") => memory::finder::handle_find(&linev, h_proc),
             Some(&"debug-thread") | Some(&"dbg-thread") | Some(&"dbg-th") => memory::set::thread::change_dbg_thread(&linev, ptr::addr_of_mut!(*ctx), h_proc, h_thread, &mut addr_func),
             Some(&"thread-info") | Some(&"th-info") => get_thread_now(*h_thread),
@@ -66,6 +66,7 @@ pub fn cmd_wait(ctx: &mut CONTEXT, h_proc: HANDLE, h_thread: &mut HANDLE, contin
             Some(&"printf") => variable::printf::printf_var(&linev, &input, h_proc),
             Some(&"b-ret-va") | Some(&"b-retva") => command::stret::handle_proc_b_ret_va(&linev, h_proc),
             Some(&"clear") | Some(&"cls") => command::clear_cmd::clear_cmd(),
+            Some(&"proc-addr") => command::proc_addr::handle_get_proc_addr(h_proc, &linev),
             None => print_lg(LevelPrint::ErrorO, "Please enter a command"),
             _ => print_lg(LevelPrint::ErrorO, format!("Unknown command: {}", cmd.unwrap())),
         }

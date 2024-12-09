@@ -1,3 +1,4 @@
+use crate::ctx_ptr;
 use crate::dbg::memory::stack::ST_FRAME;
 use crate::dbg::{memory, DbgState, RealAddr, BASE_ADDR};
 use crate::pefile::function::FUNC_INFO;
@@ -15,7 +16,7 @@ use crate::command::breakpoint::Brkpts;
 use crate::ut::cast::{str_to, NumConvert};
 use crate::ut::fmt::*;
 
-mod disasm;
+pub(crate) mod disasm;
 pub mod usages;
 pub mod x32;
 pub mod x64;
@@ -34,11 +35,18 @@ pub(crate) fn init_cm(ctx: CONTEXT, h_proc: HANDLE, h_thread: HANDLE, addr_func:
             ctx.Rip
         };
         if SYMBOLS_V.symbol_type == SymbolType::PDB {
-            memory::stack::get_local_sym(h_proc, *addr_func);
+            memory::stack::get_local_sym(h_proc, *addr_func, ctx_ptr!(ctx));
         } else {
             SymCleanup(h_proc);
         }
     }
+}
+
+#[macro_export]
+macro_rules! ctx_ptr {
+    ($wow64_ctx:expr) => {
+        std::ptr::addr_of!($wow64_ctx) as *const CONTEXT
+    };
 }
 
 fn unint_cm() {
@@ -49,7 +57,7 @@ fn unint_cm() {
     }
 }
 
-fn handle_backtrace(linev: &[&str]) {
+fn handle_backtrace(linev: &[&str], ctx: *const CONTEXT) {
     let count;
     let arg1 = linev.get(1);
     if arg1 == Some(&"full") || arg1.is_none() {
@@ -63,14 +71,14 @@ fn handle_backtrace(linev: &[&str]) {
             }
         }
     }
-    command::info::print_frame(count);
+    command::info::print_frame(count, ctx);
 }
 
-fn print_curr_func(addr_func: u64, ctx: CONTEXT) {
+fn print_curr_func(addr_func: u64, ctx: *const CONTEXT) {
     unsafe {
         println!("{}Function    : {:#x} {}{RESET_COLOR}",
             ADDR_COLOR, addr_func,
-            if let Some(sym) = (*&raw const SYMBOLS_V).symbol_file.iter().find(|s| s.real_addr64(ctx) == addr_func)
+            if let Some(sym) = (*&raw const SYMBOLS_V).symbol_file.iter().find(|s| s.real_addr(ctx) == addr_func)
             {
                 format!("<{}>", sym.name)
             } else {

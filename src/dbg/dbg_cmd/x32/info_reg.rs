@@ -128,7 +128,7 @@ pub unsafe fn handle_reg(linev: &[&str], ctx: WOW64_CONTEXT) {
             }
         }
         None => {
-            println!("{}", usage::USAGE_INFO);
+            println!("{}", usage::USAGE_REG);
         }
     }
 }

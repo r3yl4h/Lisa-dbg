@@ -34,15 +34,11 @@ pub static mut BASE_ADDR: u64 = 0;
 
 pub fn run() {
     unsafe {
-        if let Some(file) = &(*ptr::addr_of!(ALL_ELM)).file {
-            let arg = {
-                if let Some(arg) = &(*ptr::addr_of!(ALL_ELM)).arg {
-                    format!("{} {}", file, arg)
-                } else {
-                    file.to_string()
-                }
-            };
-            exec::start_debugging(&arg);
+        if let Some(file) = &(*ptr::addr_of_mut!(ALL_ELM)).file {
+            let arg = (*ptr::addr_of!(ALL_ELM)).arg.clone().unwrap_or_default();
+            let arg_str = format!("{file} {arg}");
+            print_lg(LevelPrint::Debug, format!("cli : {arg_str}"));
+            exec::start_debugging(&arg_str);
         } else {
             print_lg(LevelPrint::ErrorO, "Please enter a file path");
         }
@@ -94,7 +90,7 @@ fn init(h_proc: HANDLE) {
         }
 
         for crt in (*ptr::addr_of_mut!(ALL_ELM)).crt_func.iter_mut() {
-            if let Err(e) = memory::func::set_cr_function(h_proc, crt) {
+            if let Err(e) = crt.write_cr_func(h_proc) {
                 print_lg(LevelPrint::Error, e);
             }
         }

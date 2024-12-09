@@ -9,13 +9,14 @@ mod ste;
 mod symbol;
 mod usage;
 mod ut;
+mod dllib;
 
 use crate::cli::ALL_ELM;
 use crate::command::def;
 use std::io;
 use std::io::Write;
 use structopt::StructOpt;
-use winapi::um::winnt::HANDLE;
+use winapi::um::winnt::{CONTEXT, HANDLE};
 use command::def::variable;
 use crate::ut::fmt::{print_lg, LevelPrint};
 
@@ -45,6 +46,10 @@ fn ctx_before_run() {
 
 
 
+
+
+
+
 fn handle_cmd(linev: &[&str], input: &str) {
     let cmd = linev.first();
     match cmd {
@@ -53,11 +58,11 @@ fn handle_cmd(linev: &[&str], input: &str) {
         Some(&"run") => dbg::run(),
         Some(&"reset") => command::reset::handle_reset(&linev),
         Some(&"quit") | Some(&"q") | Some(&"exit") => std::process::exit(0),
-        Some(&"s") | Some(&"sym") | Some(&"symbol") => symbol::load_symbol(),
+        Some(&"s") | Some(&"sym") | Some(&"symbol") => symbol::load_symbol(linev, input),
         Some(&"break-ret") | Some(&"b-ret") => command::stret::st_return(&linev),
         Some(&"skip") => command::skip::skip(&linev),
         Some(&"hook") | Some(&"ho") => command::hook::hook(&linev),
-        Some(&"def") => def::handle_def(&linev),
+        Some(&"def") => def::handle_def(&linev, &input),
         Some(&"arg") | Some(&"args") | Some(&"argv") => command::arg::set_argument(&linev),
         Some(&"help") | Some(&"h") => usage::help(&linev),
         Some(&"help-c") => dbg::dbg_cmd::usages::help(&linev),
@@ -68,7 +73,8 @@ fn handle_cmd(linev: &[&str], input: &str) {
         Some(&"sym-info") => unsafe { command::sym::handle_sym_info(&linev, std::mem::zeroed()) },
         Some(&"attach") => command::attach::handle_attach(&linev),
         Some(&"bva") | Some(&"b-va") | Some(&"break-va") => command::breakpoint::handle_break_va(&linev),
-        Some(&"proc-addr") => command::proc_addr::handle_get_proc_addr(linev),
+        Some(&"proc-addr") => command::proc_addr::handle_get_proc_addr(0 as HANDLE, linev),
+        Some(&"disasm") => dbg::dbg_cmd::disasm::handle_disasm(&linev, 0 as HANDLE, 0 as *const CONTEXT),
         Some(&"b-ret-va") | Some(&"b-retva") => command::stret::handle_b_ret_va(&linev),
         Some(&"add") => command::little_secret::add_op(&linev),
         Some(&"sub") => command::little_secret::sub_op(&linev),

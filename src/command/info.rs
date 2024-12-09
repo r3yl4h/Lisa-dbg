@@ -3,25 +3,24 @@ use crate::dbg::{memory, RealAddr, BASE_ADDR};
 use crate::pefile::function::FUNC_INFO;
 use crate::pefile::section::SECTION_VS;
 use crate::symbol::SYMBOLS_V;
-use crate::{symbol, usage};
+use crate::usage;
 use std::ffi::CStr;
 use std::ptr::addr_of;
 use std::{io, mem, ptr};
-use anyhow::anyhow;
-use winapi::um::handleapi::CloseHandle;
 use winapi::um::processthreadsapi::GetProcessId;
 use winapi::um::tlhelp32::{
-    CreateToolhelp32Snapshot, Module32First, Module32Next, Thread32First, Thread32Next,
-    MODULEENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPTHREAD, THREADENTRY32,
+    CreateToolhelp32Snapshot, Thread32First, Thread32Next,
+    TH32CS_SNAPTHREAD, THREADENTRY32,
 };
 use winapi::um::winnt::{CONTEXT, HANDLE, RUNTIME_FUNCTION};
 use crate::cli::ALL_ELM;
 use crate::command::breakpoint::Brkpts;
+use crate::process::get_module;
 use crate::ut::fmt::*;
 
-pub fn handle_info(linev: &[&str], ctx: CONTEXT, proc_handle: HANDLE) {
+pub fn handle_info(linev: &[&str], ctx: *const CONTEXT, proc_handle: HANDLE) {
     if linev.len() < 2 {
-        println!("{}", usage::USAGE_VIEW);
+        println!("{}", usage::USAGE_INFO);
         return;
     }
     let elm = linev[1];
@@ -29,7 +28,7 @@ pub fn handle_info(linev: &[&str], ctx: CONTEXT, proc_handle: HANDLE) {
         "breakpoint" | "brpt" | "b" => print_elements(unsafe { &*addr_of!(ALL_ELM.break_rva) }),
         "skip" => print_elements(unsafe { &*addr_of!(ALL_ELM.skip_addr) }),
         "b-ret" => print_elements(unsafe { &*addr_of!(ALL_ELM.break_ret) }),
-        "symbol" | "sym" | "s" => print_sym(ctx),
+        "symbol" | "sym" | "s" => print_sym(&linev[1..], ctx),
         "hook-func" | "hook" | "h" => print_hook_func(),
         "watchpoint" | "watch" | "w" => print_watchpt(ctx),
         "function" | "func" | "f" => print_function(),
@@ -232,35 +231,7 @@ fn print_start() {
 }
 
 
-pub fn get_module(h_proc: HANDLE) -> Result<Vec<MODULEENTRY32>, anyhow::Error> {
-    if h_proc.is_null() {
-        return Err(anyhow!("you must have started the process to be able to use this option"));
-    }
-    let mut result = Vec::new();
-    unsafe {
-        let pid = GetProcessId(h_proc);
-        let mod_snap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
-        if mod_snap.is_null() {
-            return Err(anyhow!("failed to create module : {}", io::Error::last_os_error()));
-        }
-        let mut entry32: MODULEENTRY32 = mem::zeroed();
-        entry32.dwSize = size_of::<MODULEENTRY32>() as u32;
-        if Module32First(mod_snap, &mut entry32) == 0 {
-            return Err(anyhow!("Failed to get first module : {}", io::Error::last_os_error()));
-        }
-        loop {
-            result.push(entry32);
-            if Module32Next(mod_snap, &mut entry32) == 0 {
-                break
-            }
-        }
-        CloseHandle(mod_snap);
-    }
-    if result.len() == 0 {
-        return Err(anyhow!("Module not found for this process"));
-    }
-    Ok(result)
-}
+
 
 
 
@@ -345,7 +316,7 @@ fn print_elements<T: IntoIterator<Item = &'static Brkpts>>(elements: T) {
 
 
 
-fn print_watchpt(ctx: CONTEXT) {
+fn print_watchpt(ctx: *const CONTEXT) {
     unsafe {
         for (i, watchpts) in (*addr_of!(ALL_ELM)).watchpts.iter().enumerate() {
             println!(
@@ -376,61 +347,74 @@ pub fn print_hook_func() {
     }
 }
 
-pub fn print_sym(ctx: CONTEXT) {
+pub fn print_sym(linev: &[&str], ctx: *const CONTEXT) {
     println!("{VALID_COLOR}Symbol type: {VALUE_COLOR}{}{RESET_COLOR}", unsafe { (*ptr::addr_of!(SYMBOLS_V)).symbol_type });
-    for (i, sym) in unsafe { (*ptr::addr_of!(SYMBOLS_V)).symbol_file.iter().enumerate() } {
-        println!(
-            "{CYAN_COLOR}{i}{RESET_COLOR}:\
+    if linev.len() > 1 {
+        if let Some(sym) = unsafe { (*addr_of!(SYMBOLS_V)).symbol_file.iter().find(|s|s.name == linev[1])} {
+            println!(
+                "{CYAN_COLOR}1{RESET_COLOR}:\
             \n     {}Name     : {}\
             \n     {}\
             \n     {}Type     : {}\
             \n     {}Size     : {:#x}\
             \n     {}file     : {}:{}\
-            \n     {}register : {} {}
             {RESET_COLOR}\n",
-            GREEN_COL, sym.name,
-            if unsafe { BASE_ADDR == 0 } {
-                format!("{}offset   : {:#x}", ADDR_COLOR, sym.offset)
-            } else {
-                format!("{}address  : {:#x} (offset={})", ADDR_COLOR, sym.real_addr64(ctx), sym.offset)
-            },
-            BLUE_COLOR, sym.types_e,
-            MAGENTA, sym.size,
-            WAR_COLOR, sym.filename, sym.line,
-            VALID_COLOR, sym.register, frmrs(sym.register)
-        );
+                GREEN_COL, sym.name,
+                if unsafe { BASE_ADDR == 0 } {
+                    format!("{}offset   : {:#x}", ADDR_COLOR, sym.offset)
+                } else {
+                    format!("{}address  : {:#x}", ADDR_COLOR, sym.real_addr(ctx))
+                },
+                BLUE_COLOR, sym.types_e,
+                MAGENTA, sym.size,
+                WAR_COLOR, sym.filename, sym.line,
+            );
+        } else {
+            print_lg(LevelPrint::ErrorO, "unknown symbol");
+        }
+    }else {
+        for (i, sym) in unsafe { (*addr_of!(SYMBOLS_V)).symbol_file.iter().enumerate() } {
+            println!(
+                "{CYAN_COLOR}{i}{RESET_COLOR}:\
+            \n     {}Name     : {}\
+            \n     {}\
+            \n     {}Type     : {}\
+            \n     {}Size     : {:#x}\
+            \n     {}file     : {}:{}\
+            {RESET_COLOR}\n",
+                GREEN_COL, sym.name,
+                if unsafe { BASE_ADDR == 0 } {
+                    format!("{}offset   : {:#x}", ADDR_COLOR, sym.offset)
+                } else {
+                    format!("{}address  : {:#x}", ADDR_COLOR, sym.real_addr(ctx))
+                },
+                BLUE_COLOR, sym.types_e,
+                MAGENTA, sym.size,
+                WAR_COLOR, sym.filename, sym.line,
+            );
+        }
     }
 }
 
-pub fn frmrs(reg_field: u32) -> String {
-    let s_reg = symbol::pdb::get_reg_with_reg_field(reg_field);
-    if s_reg != "" {
-        format!("({})", s_reg.to_uppercase())
-    } else {
-        "".to_string()
-    }
-}
 
-pub fn print_frame(count: usize) {
+
+pub fn print_frame(count: usize, ctx: *const CONTEXT) {
     unsafe {
         for i in 0..count {
             if let Some(frame) = (*addr_of!(memory::stack::ST_FRAME)).get(i) {
                 let get_function_and_symbol = |offset| {
-                    (*addr_of!(FUNC_INFO)).iter().find(|f| f.BeginAddress as u64 + BASE_ADDR <= offset && f.EndAddress as u64 + BASE_ADDR >= offset)
-                        .map(|func| {
-                            if let Some(sym) = (*addr_of!(SYMBOLS_V)).symbol_file.iter().find(|s| s.offset == func.BeginAddress as i64) {
-                                format!("<{}{:+}>", sym.name, offset as i64 - (func.BeginAddress as i64 + BASE_ADDR as i64))
-                            } else {
-                                format!("<func_{:x}{:+}>", func.BeginAddress, offset as i64 - (func.BeginAddress as i64 + BASE_ADDR as i64))
-                            }
-                        })
-                        .unwrap_or_else(||
-                            if let Some(sym) = (*addr_of!(SYMBOLS_V)).symbol_file.iter().find(|s| s.offset == offset as i64) {
-                                format!("<{}{:+}>", sym.name, offset as i64 - (sym.offset + BASE_ADDR as i64))
-                            }else {
-                                "".to_string()
-                            }
-                        )
+                    if let Some(sym) = (*&raw const SYMBOLS_V).symbol_file.iter().find(|s|s.is_in_sym(offset, ctx)) {
+                        let offset = offset - sym.real_addr(ctx);
+                        return format!("<{}+{}>", sym.name, offset);
+                    }
+                            else if let Some(f) = (*&raw const FUNC_INFO).iter().find(|f|{
+                        f.BeginAddress as u64 + BASE_ADDR <= offset && f.EndAddress as u64 + BASE_ADDR >= offset
+                    }) {
+                        let func_addr = f.BeginAddress as u64 + BASE_ADDR;
+                        let offset = offset - func_addr;
+                        return format!("<func_{:#x}+{}>", func_addr - BASE_ADDR, offset);
+                    }
+                    return String::from("")
                 };
                 println!("\n{}#{}:", BLUE_COLOR, i);
                 println!("{}   rip               = {}{:#18x} {}", ADDR_COLOR, VALUE_COLOR, frame.AddrPC.Offset, get_function_and_symbol(frame.AddrPC.Offset));

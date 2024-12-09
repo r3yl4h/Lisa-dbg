@@ -2,7 +2,7 @@ use crate::ut::fmt::RESET_COLOR;
 use crate::ut::fmt::VALID_COLOR;
 use crate::usage;
 use crate::usage::{ca_help, help_def, USAGE_B_RET_VA, USAGE_PRINTF_VAR};
-use crate::usage::{USAGE_INFO, USAGE_MEM_INFO, USAGE_SET_REG};
+use crate::usage::{USAGE_REG, USAGE_MEM_INFO, USAGE_SET_REG};
 
 
 pub const USAGE_DEREF: &str = r#"
@@ -35,14 +35,13 @@ Note:
     deref char[] rsp                    # Dereference and read a string up to the null character from the address contained in rsp (works with all 64bit registers)
 "#;
 
-pub const USAGE_DISASM: &str = r#"Usage: disasm <address/register> [count]
+pub const USAGE_DISASM: &str = r#"Usage: disasm <address/register/symbol> [count]
 Description:
-  Disassembles a given number of instructions from a specified address (va) or register
-  If the count is not specified, the disassembler will automatically disassemble the function
-  in which the address is located
+  Disassembles insn from a specified address (va if the program is launched and rva if not) or address contained in register (if the program is launched) or addr of specified symbol
+  if count is not specified, the dbg will disassemble everything else from the function the statement is in
 
 Options:
-  <address/register>   The address (virtual address) or register to disassemble
+  <address/register>   The address or register to disassemble
   [count]              The number of instructions to disassemble. If omitted, the entire
                        function containing the address will be disassembled
 
@@ -229,14 +228,14 @@ for more information (if available) just type <command> without its arguments{RE
             "mem-info" => println!("{USAGE_MEM_INFO}"),
             "proc-addr" => println!("{}", usage::USAGE_PROC_ADDR),
             "reset" => println!("{}", usage::USAGE_RESET),
-            "s" | "symbol" => println!("for load the symbol file (if available)"),
+            "s" | "symbol" => println!("{}", usage::USAGE_SYM),
             "set" => help_set(&linev),
             "skip" => println!("{}", usage::USAGE_SKIP),
             "sym-addr" | "sym-address" => println!("for view the symbol address with here name (va)"),
             "sym-info" => println!("{}", usage::USAGE_SYM_INFO),
             "thread-info" | "th-info" => println!("get information about the current thread being debugged"),
-            "value" | "v" | "register" | "registers" | "r" => println!("{}", USAGE_INFO),
-            "info" => println!("{}", usage::USAGE_VIEW),
+            "value" | "v" | "register" | "registers" | "r" => println!("{}", USAGE_REG),
+            "info" => println!("{}", usage::USAGE_INFO),
             "printf" => println!("{USAGE_PRINTF_VAR}"),
             _ => {}
         }

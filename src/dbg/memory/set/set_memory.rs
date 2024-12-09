@@ -74,7 +74,7 @@ pub fn set_memory(h_proc: HANDLE, ctx: *const CONTEXT, arg: &[&str]) {
 
 pub fn target_mem(h_proc: HANDLE, value_str: &str, target_addr: u64, cout: usize, types_r: &str) {
     match types_r {
-        "uint8_t" | "u8" | "byte" => target_in_memory::<u8>(h_proc, &value_str, target_addr, cout),
+        "uint8_t" | "u8" | "byte" => target_in_memory::<u8>(h_proc, value_str, target_addr, cout),
         "int8_t" | "i8" | "char" => target_in_memory::<i8>(h_proc, value_str, target_addr, cout),
         "uint16_t" | "word" | "u16" => target_in_memory::<u16>(h_proc, value_str, target_addr, cout),
         "int16_t" | "i16" => target_in_memory::<i16>(h_proc, value_str, target_addr, cout),

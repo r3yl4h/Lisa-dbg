@@ -9,6 +9,7 @@ use std::{io, ptr, slice};
 use winapi::um::winnt::{
     IMAGE_DOS_HEADER, IMAGE_FILE_HEADER, IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64,
 };
+use crate::pefile::section::SECTION_VS;
 
 pub struct Section {
     pub name: String,
@@ -57,7 +58,7 @@ pub fn get_name(smptroffs: u64, file: &mut File, name_bytes: Vec<u8>) -> Vec<u8>
 }
 
 pub unsafe fn parse_header() -> Result<(), io::Error> {
-    let mut file = File::open((*std::ptr::addr_of!(ALL_ELM)).file.clone().unwrap())?;
+    let mut file = File::open((*ptr::addr_of!(ALL_ELM)).file.clone().unwrap())?;
     let mut dos_header: IMAGE_DOS_HEADER = std::mem::zeroed();
     file.read_exact(slice::from_raw_parts_mut(ptr::addr_of_mut!(dos_header) as *mut u8, size_of::<IMAGE_DOS_HEADER>()))?;
     if dos_header.e_magic != 0x5a4d {
@@ -84,10 +85,14 @@ pub unsafe fn parse_header() -> Result<(), io::Error> {
         section::parse_section(NtHeaders::Headers32(nt_header_32), &mut file)?;
         function::parse_pdata(nt_header_32.OptionalHeader.DataDirectory[3]);
     } else {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            "only x64 - x32 file is supported",
-        ));
+        return Err(io::Error::new(io::ErrorKind::Other, "only x64 - x32 file is supported", ));
     }
     Ok(())
+}
+
+
+pub fn get_section_of_rva(rva: u64) -> Option<&'static Section> {
+    unsafe {
+        (*ptr::addr_of!(SECTION_VS)).iter().find(|s| s.addr as u64 <= rva && s.addr as u64 + s.content.len() as u64 >= rva)
+    }
 }

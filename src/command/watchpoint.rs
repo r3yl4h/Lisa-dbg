@@ -88,6 +88,7 @@ impl RealAddr for Watchpts {
             if self.register != "" {
                 return ctx.str_to_ctx(&self.register);
             }
+            
             match self.flag_type_mem {
                 FlagTypeMem::Stack => {
                     if let Some(frame) = memory::stack::get_frame_before_func(ctx.Eip as u64) {
@@ -127,9 +128,9 @@ impl Watchpts {
         result
     }
 
-    pub fn format_offset(&self, ctx: CONTEXT) -> String {
+    pub fn format_offset(&self, ctx: *const CONTEXT) -> String {
         if unsafe { BASE_ADDR != 0 } || self.flag_type_mem == FlagTypeMem::VirtualAddr {
-            format!("{:#x}", self.real_addr64(ctx))
+            format!("{:#x}", self.real_addr(ctx))
         } else if self.flag_type_mem == FlagTypeMem::Stack {
             format!(".fp{:+}", self.offset)
         } else {
@@ -200,9 +201,6 @@ impl FromStr for Watchpts {
                             offset = Some(sym.offset);
                             if memory_size == usize::MAX {
                                 memory_size = sym.size;
-                            }
-                            if sym.register != 0 {
-                                register = symbol::pdb::get_reg_with_reg_field(sym.register);
                             }
                         } else {
                             return Err(format!("Invalid part in watchpoint format : {part}"));

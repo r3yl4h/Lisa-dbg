@@ -127,7 +127,7 @@ pub unsafe fn set_breakpoint(h_proc: HANDLE, b_addr: u64, last_oc: &mut u8) -> R
     if VirtualProtectEx(h_proc, b_addr as LPVOID, 1, old_protect, &mut old_protect) == 0 {
         return Err(format!("Failed to restore memory protection at address: 0x{:x} : {}", b_addr, io::Error::last_os_error()))
     }
-    print_lg(LevelPrint::Debug, format!("Breakpoint set at address: {:#x} in memory", b_addr));
+    print_lg(LevelPrint::Debug, format!("Breakpoint set at address: {:#x}", b_addr));
     Ok(())
 }
 

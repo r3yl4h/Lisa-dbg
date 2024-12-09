@@ -32,6 +32,7 @@ fn get_addr_or_symbol(linev: &[&str], idx: usize) -> Option<u64> {
     }
 }
 
+
 fn set_hook(addr1: u64, addr2: u64, h_proc: Option<HANDLE>) {
     let mut orig_b = 0;
     if let Some(h_proc) = h_proc {

@@ -19,7 +19,6 @@ pub const CYAN_COLOR: &str = "\x1b[36m";
 pub const MAGENTA: &str = "\x1b[35m";
 pub const BLUE_COLOR: &str = "\x1b[34m";
 
-pub const INSTR_COLOR: &str = "\x1b[92m";
 
 
 

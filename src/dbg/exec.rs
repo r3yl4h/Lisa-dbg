@@ -60,9 +60,8 @@ pub fn debug_loop(h_proc: HANDLE) {
                                 }
                             }
                         }
-                        EXCEPTION_SINGLE_STEP | STATUS_WX86_SINGLE_STEP => {
-                            handle_point::handle_single_step(debug_event, except_addr, h_proc, &mut c_dbg);
-                        },
+                        EXCEPTION_SINGLE_STEP | STATUS_WX86_SINGLE_STEP => 
+                            handle_point::handle_single_step(debug_event, except_addr, h_proc, &mut c_dbg),
                         EXCEPTION_ARRAY_BOUNDS_EXCEEDED =>
                             print_lg(LevelPrint::Error, format!("The code tries to access an invalid index in the table : {:#x}", debug_event.u.Exception().ExceptionRecord.ExceptionAddress as u64)),
 
@@ -146,6 +145,7 @@ pub fn debug_loop(h_proc: HANDLE) {
                     } else {
                         print_lg(LevelPrint::Debug, format!("Dll at address : {:#x} has been loaded", dll_base as u64));
                     }
+                    
                     match get_export_func_in_dll(h_proc, dll_base as u64) {
                         Ok(export_func) => (*ptr::addr_of_mut!(SYMBOLS_V)).symbol_file.extend_from_slice(&export_func),
                         Err(e) => print_lg(LevelPrint::Error, format!("failed to get export function of dll : {e}")),
@@ -199,13 +199,12 @@ pub fn debug_loop(h_proc: HANDLE) {
 
 
 
-pub fn start_debugging(exe_path: &str) {
+pub fn start_debugging(cli: &str) {
     unsafe {
         let mut si = mem::zeroed::<STARTUPINFOA>();
         let mut pi = mem::zeroed::<PROCESS_INFORMATION>();
         si.cb = size_of::<STARTUPINFOA>() as u32;
-        if CreateProcessA(ptr::null_mut(), exe_path.as_ptr() as *mut i8, ptr::null_mut(), ptr::null_mut(), 0, DEBUG_PROCESS,
-                          ptr::null_mut(), ptr::null_mut(), &mut si, &mut pi) == 0 {
+        if CreateProcessA(ptr::null_mut(), cli.as_ptr() as *mut i8, ptr::null_mut(), ptr::null_mut(), 0, DEBUG_PROCESS, ptr::null_mut(), ptr::null_mut(), &mut si, &mut pi) == 0 {
             print_lg(LevelPrint::Error, format!("CreateProcess failed : {}", io::Error::last_os_error()));
             return;
         }

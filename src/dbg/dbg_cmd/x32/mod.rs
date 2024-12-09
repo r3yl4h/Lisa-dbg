@@ -3,7 +3,7 @@ pub mod info_reg;
 pub mod modifier32;
 
 use crate::ut::fmt::*;
-use crate::command;
+use crate::{command, ctx_ptr};
 use crate::command::{hook, sym};
 use crate::dbg::dbg_cmd::*;
 use crate::dbg::memory::set::thread::get_thread_now;
@@ -29,12 +29,16 @@ pub fn init_cm(ctx: WOW64_CONTEXT, h_proc: HANDLE, h_thread: HANDLE, addr_func: 
             ctx.Eip
         };
         if SYMBOLS_V.symbol_type == SymbolType::PDB {
-            memory::stack::get_local_sym(h_proc, *addr_func as u64);
+            memory::stack::get_local_sym(h_proc, *addr_func as u64, ctx_ptr!(ctx));
         } else {
             SymCleanup(h_proc);
         }
     }
 }
+
+
+
+
 
 pub fn cmd_wait32(ctx: &mut WOW64_CONTEXT, h_proc: HANDLE, h_thread: &mut HANDLE, c_dbg: &mut DbgState) {
     let mut input = String::new();
@@ -66,15 +70,15 @@ pub fn cmd_wait32(ctx: &mut WOW64_CONTEXT, h_proc: HANDLE, h_thread: &mut HANDLE
             Some(&"ret") => handle_ret::<u32>(&mut ctx.Eip, &mut ctx.Esp),
             Some(&"break-ret") | Some(&"b-ret") => command::stret::handle_stret(&linev, h_proc),
             Some(&"skip") => handle_skip(&linev, h_proc),
-            Some(&"info") => command::info::handle_info(&linev, wow64_context_to_context(*ctx), h_proc),
+            Some(&"info") => command::info::handle_info(&linev, ctx_ptr!(*ctx), h_proc),
             Some(&"help") => usages::help(&linev),
-            Some(&"backtrace") | Some(&"frame") => handle_backtrace(&linev),
+            Some(&"backtrace") | Some(&"frame") => handle_backtrace(&linev, ctx_ptr!(*ctx)),
             Some(&"disasm") => disasm::handle_disasm(&linev, h_proc, ptr::addr_of!(*ctx) as *const CONTEXT),
-            Some(&"sym-info") => sym::handle_sym_info(&linev, wow64_context_to_context(*ctx)),
-            Some(&"address-function") | Some(&"address-func") | Some(&"addr-func") => print_curr_func(addr_func as u64, wow64_context_to_context(*ctx)),
-            Some(&"symbol-local") | Some(&"sym-local") => sym::print_local_sym(wow64_context_to_context(*ctx)),
-            Some(&"memory-info") | Some(&"mem-info") => memory::mem_info::handle_mem_info32(&linev, h_proc, *ctx),
-            Some(&"def") => command::def::handle_def(&linev),
+            Some(&"sym-info") => sym::handle_sym_info(&linev, ctx_ptr!(*ctx)),
+            Some(&"address-function") | Some(&"address-func") | Some(&"addr-func") => print_curr_func(addr_func as u64, ctx_ptr!(*ctx)),
+            Some(&"symbol-local") | Some(&"sym-local") => sym::print_local_sym(ctx_ptr!(*ctx)),
+            Some(&"memory-info") | Some(&"mem-info") => memory::mem_info::handle_mem_info(&linev, h_proc, ctx_ptr!(*ctx)),
+            Some(&"def") => command::def::handle_def(&linev, &input),
             Some(&"find") => memory::finder::handle_find(&linev, h_proc),
             Some(&"b-va") | Some(&"break-va") => command::breakpoint::handle_b_va_proc(&linev, h_proc, ptr::addr_of!(*ctx) as *const CONTEXT),
             Some(&"add") => command::little_secret::add_op(&linev),
@@ -89,6 +93,7 @@ pub fn cmd_wait32(ctx: &mut WOW64_CONTEXT, h_proc: HANDLE, h_thread: &mut HANDLE
             Some(&"hook") => hook::handle_hook_proc(&linev, h_proc),
             Some(&"b-ret-va") | Some(&"b-retva") => command::stret::handle_proc_b_ret_va(&linev, h_proc),
             Some(&"printf") => variable::printf::printf_var(&linev, &input, h_proc),
+            Some(&"proc-addr") => command::proc_addr::handle_get_proc_addr(h_proc, &linev),
             Some(&"clear") | Some(&"cls") => command::clear_cmd::clear_cmd(),
             None => print_lg(LevelPrint::ErrorO, "Please enter a command"),
             _ => print_lg(LevelPrint::ErrorO, format!("Unknown command: {}", cmd.unwrap())),
@@ -97,28 +102,10 @@ pub fn cmd_wait32(ctx: &mut WOW64_CONTEXT, h_proc: HANDLE, h_thread: &mut HANDLE
     unint_cm();
 }
 
-pub fn wow64_context_to_context(wow64_ctx: WOW64_CONTEXT) -> CONTEXT {
-    let mut ctx: CONTEXT = unsafe { std::mem::zeroed() };
-    ctx.Rax = wow64_ctx.Eax as u64;
-    ctx.Rbx = wow64_ctx.Ebx as u64;
-    ctx.Rcx = wow64_ctx.Ecx as u64;
-    ctx.Rdx = wow64_ctx.Edx as u64;
-    ctx.Rsi = wow64_ctx.Esi as u64;
-    ctx.Rdi = wow64_ctx.Edi as u64;
-    ctx.Rsp = wow64_ctx.Esp as u64;
-    ctx.Rbp = wow64_ctx.Ebp as u64;
-    ctx.Rip = wow64_ctx.Eip as u64;
-    ctx.Dr0 = wow64_ctx.Dr0 as u64;
-    ctx.Dr1 = wow64_ctx.Dr1 as u64;
-    ctx.Dr2 = wow64_ctx.Dr2 as u64;
-    ctx.Dr3 = wow64_ctx.Dr3 as u64;
-    ctx.Dr6 = wow64_ctx.Dr6 as u64;
-    ctx.Dr7 = wow64_ctx.Dr7 as u64;
-    ctx.ContextFlags = wow64_ctx.ContextFlags;
-    ctx
-}
 
-fn handle_backtrace(linev: &[&str]) {
+
+
+fn handle_backtrace(linev: &[&str], ctx: *const CONTEXT) {
     let count;
     if linev.len() == 1 || linev[1] == "full" {
         count = usize::MAX;
@@ -131,5 +118,5 @@ fn handle_backtrace(linev: &[&str]) {
             }
         }
     }
-    command::info::print_frame(count);
+    command::info::print_frame(count, ctx);
 }

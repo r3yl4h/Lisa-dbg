@@ -27,7 +27,7 @@ Notes:
    all rva addresses are resolved during the creation of the debug process and are calculated with the base address, if you put the name of a symbol, it will take its rva
 \x1b[0m";
 
-pub const USAGE_INFO: &str = "\x1b[32m
+pub const USAGE_REG: &str = "\x1b[32m
 Usage: value <option>
 
 Options:
@@ -66,7 +66,6 @@ Options:
     breakpoint, b         - Clear all breakpoints
 
     symbol, s             - Clear all symbol loaded
-    crt-func              - Clear all function created with cmd 'crt-func'
     hook, ho              - Clear all defined hooks
     b-ret                 - Clear all ret function tracker
     skip                  - Restores the function execution flow defined with \"skip\"
@@ -126,44 +125,29 @@ Notes:
     - The command will print an error message if the arguments are invalid or insufficient
 \x1b[0m";
 
-pub const USAGE_CRT_FUNC: &str = "\x1b[32m
-create-func <NAME> <RETURN-VALUE>
-
-Description:
-    This command schedules a function with a return value that will be initialized when the process is created
-
-Examples:
-  create test 1
-
-Notes:
- - you will not know the address of the function before the process starts
-\x1b[0m";
-
 pub const USAGE_SET_ARG: &str = "\x1b[32margs <ARGUMENT>
 Description:
     This command is for specifying arguments when launching the process to be debugged
 
 Examples:
- args \"--test \"C:\\test\\random_file.bin\"
+ args --test \"C:\\test\\random_file.bin\"
 
 Notes:
  - if in your cli there must be strings etc and you must put double quotes, then put them
 \x1b[0m";
 
-pub const USAGE_VIEW: &str = "\x1b[32mUsage: info <option>
+pub const USAGE_INFO: &str = "\x1b[32mUsage: info <option>
 Options:
     breakpoint, brpt, b         Display all breakpoint addresses
     skip                        Display all skip addresses
     b-ret                       Display all b-ret addresses
-    symbol, sym, s              Display all symbol
+    symbol, sym, s              Display all symbol (if you want the info of 1 symbols type \"info s <name>\")
     hook-func, hook, h          Display all hooks that have been defined
-    create-func, crt-func       Display all user-created functions
+    def <elm>                   Show a defined element, specify the element type with \"<elm>\" (if it is a function, a var, etc.) and its name
     function, func, f           Display all function entry
     section, sec                Displays sections informations
-    hmodule, module, m          displays all modules loaded by the process (for info on a target module type \"info module <name>\" and to see the module functions type:\"info module <name> function\")
+    hmodule, module, m, proc    displays all modules loaded by the process (for info on a target module type \"info module <name>\" and to see the module functions type:\"info module <name> function\")
     thread, th                  Displays thread information for the process being debugged
-
-
     \x1b[0m";
 
 pub const USAGE_SET: &str = "\x1b[32m
@@ -249,13 +233,14 @@ Element:
    b-ret                  : To remove ret monitoring from the function
    hook                   : To remove the hook defined with the specified function (the specified function must be the function that is being replaced)
    watchpoint, watch, w   : To remove a watchpoint defined with the offset (compared to the base address or rsp depending on the selected memory area)
+   def <elm>              : To remove an element that has been defined, this can be a created function, a structure, a variable, etc
 
 Examples:
   remove breakpoint main        # Remove breakpoint set to \"main\"
   remove skip 0xdeadbeef        # Remove address 0xdeadbeef from skip vector
   remove b-ret poop2            # Remove ret monitoring from poop2
   remove hook test              # Remove redirection from this function
-  remove crt-func test2         # Remove test2 of crt-func
+  remove def func test          # Delete the function \"test\"
 \x1b[0m";
 
 pub const USAGE_DEF: &str = "\x1b[32mUsage: def <element> <arg>
@@ -384,10 +369,15 @@ Notes:
 
 
 
-pub const USAGE_DEF_FUNC: &str = "\x1b[32mUsage: def func <name>
+pub const USAGE_DEF_FUNC: &str = "\x1b[32mUsage: def func <name> [file <path>]
 
 Description:
-   allows you to create functions with asm code in an input, if you press enter in the input this will take you to a new line, to exit you have to do : + q (:q) and press enter
+   Allows you to create functions with assembly (asm) code.
+   - If you provide the `file` option followed by a file path, the function will be created using the instructions from the specified file.
+   - Otherwise, you can input the asm code line by line. Press `Enter` to add a new line. To exit, type `:q` and press `Enter`.
+
+Options:
+   file <path>    Specify a file containing assembly code to define the function.
 
 Example:
    lisa>> def func test
@@ -396,14 +386,40 @@ Example:
        call rax
        ret
        :q
-   lisa>>
+   >>
+
+   >> def func test file example.asm
 
 Notes:
-  you can use the symbols that have been loaded in the asm code, but do not write instructions like \"call main\" or \"jnz main\",
-  but rather
-  \"mov rax, main
-   call rax\", (do not use lea)
+  - you cannot use symbols that are outside of your asm code, so you will have to do
+  `mov rax, 0xabsolute
+   call rax
+   `
+
+  -
+
+  - When using the `file` option, ensure the file contains valid assembly code. Each line in the file will be verified before adding it to the function.
 \x1b[0m";
+
+
+pub const USAGE_SYM: &str = "\x1b[32mUsage: s [<pdb-path>]
+
+Description:
+   Loads symbols into the program, if you want to load symbol information from a pdb file, specify the file path as an argument to the command
+
+Examples:
+   >> s
+   (This will load the default symbols configured in the program)
+
+   >> s C:\\path\\to\\file.pdb
+   (This will load symbols from the specified PDB file located at 'C:\\path\\to\\file.pdb')
+
+Notes:
+   - Ensure the specified PDB file exists and is accessible.
+   - If no file path is provided, the command will attempt to load the default symbol configuration
+\x1b[0m";
+
+
 
 pub const USAGE_ATTACH: &str = "\x1b[32mUSAGE: attach <pid/name>
 
@@ -461,7 +477,6 @@ fn print_help() {
     println!("    {:<38}{}", "skip", "skip calls to the specified function");
     println!("    {:<38}{}", "proc-addr", "get the address of a function in a dll");
     println!("    {:<38}{}", "hook, ho", "Setup a function hook to redirect execution flow");
-    println!("    {:<38}{}", "create-func, crt-func", "Create a custom function with a return value allocated at execution");
     println!("    {:<38}{}", "info", "see certain information like the symbol that have been placed etc");
     println!("    {:<38}{}", "watchpoint, watch, w", "Set an observation point to a memory location, if the memory location is on the stack, this must be specified");
     println!("    {:<38}{}", "sym-info", "displays all information of the specified symbol");
@@ -492,12 +507,11 @@ fn print_choice(arg: &[&str]) {
         "reset" => println!("{}", USAGE_RESET),
         "remove" => println!("{}", USAGE_REMOVE),
         "quit" | "q" | "exit" => println!("{VALID_COLOR}Exit the debugger{RESET_COLOR}"),
-        "symbol" | "sym" | "s" => println!("{VALID_COLOR}for load the symbol file (if avaible){RESET_COLOR}"),
+        "symbol" | "sym" | "s" => println!("{USAGE_SYM}"),
         "b-ret" => println!("{}", USAGE_B_RET),
         "skip" => println!("{}", USAGE_SKIP),
         "hook" | "ho" => println!("{}", USAGE_HOOK),
-        "create-func" | "crt-func" => println!("{}", USAGE_CRT_FUNC),
-        "info" => println!("{}", USAGE_VIEW),
+        "info" => println!("{}", USAGE_INFO),
         "proc-addr" => println!("{}", USAGE_PROC_ADDR),
         "watchpoint" | "watch" | "w" => println!("{}", USAGE_WATCHPTS),
         "sym-info" => println!("{}", USAGE_SYM_INFO),

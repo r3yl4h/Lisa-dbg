@@ -69,6 +69,11 @@ pub fn remove_element(linev: &[&str]) {
                 print_lg(LevelPrint::DebugO, format!("{target_name} was retained successfully"));
                 return;
             }
+            "s" | "symbol" | "symbols" => {
+                (*ptr::addr_of_mut!(SYMBOLS_V)).symbol_file.retain(|s|s.name != target);
+                print_lg(LevelPrint::DebugO, format!("{target} was retained successfully"));
+                return;
+            }
             _ => None,
         }
     };

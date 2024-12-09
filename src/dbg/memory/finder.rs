@@ -120,7 +120,7 @@ fn find_seq_byte<T: ToType + Default + Clone + std::fmt::Debug + PartialEq + std
         print_lg(LevelPrint::ErrorO, format!("element {:?} not found", result));
     } else {
         for addr in found_addr {
-            print_lg(LevelPrint::DebugO, format!("element found at address {:#x}", addr));
+            print_lg(LevelPrint::DebugO, format!("element found at address : {:#x}", addr));
         }
     }
 }

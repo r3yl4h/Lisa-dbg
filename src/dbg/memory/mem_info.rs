@@ -3,10 +3,13 @@ use std::{io, mem};
 use winapi::shared::minwindef::LPVOID;
 use winapi::um::memoryapi::VirtualQueryEx;
 use winapi::um::winnt::*;
-use crate::ut::{get_addr_va, get_addr_va32};
+use crate::ut::{get_addr_va};
 use crate::ut::fmt::{print_lg, LevelPrint};
 
-pub fn handle_mem_info64(linev: &[&str], h_proc: HANDLE, ctx: CONTEXT) {
+
+
+
+pub fn handle_mem_info(linev: &[&str], h_proc: HANDLE, ctx: *const CONTEXT) {
     if linev.len() != 2 {
         println!("{USAGE_MEM_INFO}");
         return;
@@ -22,21 +25,7 @@ pub fn handle_mem_info64(linev: &[&str], h_proc: HANDLE, ctx: CONTEXT) {
     get_mem_info(addr, h_proc);
 }
 
-pub fn handle_mem_info32(linev: &[&str], h_proc: HANDLE, ctx: WOW64_CONTEXT) {
-    if linev.len() != 2 {
-        println!("{USAGE_MEM_INFO}");
-        return;
-    }
-    let target = linev[1];
-    let addr = match get_addr_va32(target, ctx) {
-        Ok(addr) => addr,
-        Err(e) => {
-            print_lg(LevelPrint::ErrorO, e);
-            return;
-        }
-    };
-    get_mem_info(addr as u64, h_proc);
-}
+
 
 fn get_mem_info(addr: u64, h_proc: HANDLE) {
     unsafe {

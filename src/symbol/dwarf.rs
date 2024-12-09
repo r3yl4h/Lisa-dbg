@@ -21,12 +21,14 @@ pub fn target_dwarf_info(sections: &[Section]) -> Result<(), Error> {
         while let Some((_, entry)) = entries.next_dfs()? {
             let mut symbol_info = SymbolFile::default();
             let mut attrs = entry.attrs();
-            symbol_info.types_e = entry.tag().to_string();
-            while let Some(attr) = attrs.next()? {
-                process_attribute(&attr, &dwarf, &unit, &mut symbol_info)?;
-            }
-            if symbol_info.offset != 0 && symbol_info.name != "" {
-                unsafe { (*ptr::addr_of_mut!(SYMBOLS_V)).symbol_file.push(symbol_info) }
+            if entry.tag() == gimli::DW_TAG_subprogram || entry.tag() == gimli::DW_TAG_variable{
+                symbol_info.types_e = entry.tag().to_string();
+                while let Some(attr) = attrs.next()? {
+                    process_attribute(&attr, &dwarf, &unit, &mut symbol_info)?;
+                }
+                if symbol_info.offset != 0 && symbol_info.name != "" {
+                    unsafe { (*ptr::addr_of_mut!(SYMBOLS_V)).symbol_file.push(symbol_info) }
+                }
             }
         }
     }

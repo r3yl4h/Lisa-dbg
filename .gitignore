@@ -1,1 +1,6 @@
 /target
+/.idea
+/.gitignore
+/lisa_dbg
+/symbol_pe/.vs
+/symbol_pe/out

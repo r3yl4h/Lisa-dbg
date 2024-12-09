@@ -32,6 +32,7 @@ pub struct All {
     pub var_def: Vec<def::variable::Var>,
     pub break_ret_va: Vec<Brkpts>,
     pub print_ot: u8,
+    pub pdb_path: Option<String>,
 }
 
 impl All {
@@ -61,7 +62,7 @@ pub static mut ALL_ELM: Lazy<All> = Lazy::new(|| All::default());
 
 
 #[derive(Debug, StructOpt, Default)]
-#[structopt(name = "LisaDbg", version = "2.4.0")]
+#[structopt(name = "LisaDbg", version = "1.0")]
 pub struct Dbgoption {
     pub file: Option<String>,
     #[structopt(short = "b", long = "breakpoint", help = "to place a breakpoint at an address (RVA)")]
