@@ -13,9 +13,6 @@ Welcome to **LisaDbg**, a lightweight and powerful debugger written in Rust. Des
    - [CLI Interface](#cli-interface)  
    - [Pre-Debugging Interface](#pre-debugging-interface)  
    - [During-Debugging Interface](#during-debugging-interface)  
-5. [Building and Running](#building-and-running)  
-6. [Contributing](#contributing)  
-7. [License](#license)
 
 ---
 
