@@ -51,7 +51,7 @@ Ensure you have [Rust](https://rustup.rs/) installed on your system. LisaDbg is 
 
 1. Clone the Git repository:  
    ```bash
-   git clone https://github.com/yourusername/LisaDbg.git
+   git clone https://github.com/r3yl4h/LisaDbg.git
    cd LisaDbg
    ```
 
